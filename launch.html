@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SMART Launch</title>
+  <script src="https://cdn.jsdelivr.net/npm/fhirclient/build/fhir-client.js"></script>
+</head>
+<body>
+  <h2>SMART on FHIR Launching...</h2>
+
+  <script>
+    // ✅ EHR Launch 正確作法：什麼都不要給
+    // fhirclient.js 會自動從 URL 解析 iss / launch
+    FHIR.oauth2.authorize();
+  </script>
+</body>
+</html>
