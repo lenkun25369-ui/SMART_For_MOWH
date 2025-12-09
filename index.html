@@ -1,64 +1,95 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <title>SMART on FHIR Dashboard</title>
-
-  <!-- ✅ 正確引入 SMART JS Client -->
-  <script src="https://cdn.jsdelivr.net/npm/fhirclient@2.8.6/build/fhir-client.min.js"></script>
 
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: Arial, Helvetica, sans-serif;
       margin: 20px;
     }
     pre {
       background: #f5f5f5;
       padding: 10px;
-      border-radius: 5px;
+      border-radius: 4px;
+      max-height: 400px;
+      overflow: auto;
+    }
+    h1, h2 {
+      margin-top: 1.2em;
     }
   </style>
+
+  <!-- ✅ 官方 SMART on FHIR client -->
+  <script src="https://cdn.jsdelivr.net/npm/fhirclient@2.8.6/build/fhir-client.min.js"></script>
 </head>
 
 <body>
+
   <h1>SMART on FHIR Dashboard</h1>
 
   <h2>Current Patient</h2>
-  <div id="patient">Loading...</div>
+  <pre id="patient">Loading...</pre>
 
   <h2>Recent Observations</h2>
-  <div id="observations">Loading...</div>
+  <pre id="observations">Loading...</pre>
 
   <script>
-    // ✅ 一切都「只能」寫在 ready 裡
+    /**
+     * ✅ 正確 SMART App 初始化（EHR launch 專用）
+     * ❌ 不要用 client = new FHIR.client(...)
+     * ✅ 一定要用 FHIR.oauth2.ready()
+     */
     FHIR.oauth2.ready()
-      .then(client => {
-        // ✅ 先確認 client & patient 存在
-        console.log("SMART client:", client);
-        console.log("Patient ID:", client.patient.id);
+      .then(function (client) {
 
-        // ✅ 取得 Patient
-        return client.patient.read()
-          .then(patient => {
-            document.getElementById("patient").innerHTML =
-              "<pre>" + JSON.stringify(patient, null, 2) + "</pre>";
+        // ✅ 方便你在 DevTools 看
+        window.client = client;
 
-            // ✅ 查 Observation
-            return client.request(
-              `Observation?subject=Patient/${client.patient.id}`,
-              { pageLimit: 5, flat: true }
-            );
-          })
-          .then(observations => {
-            document.getElementById("observations").innerHTML =
-              "<pre>" + JSON.stringify(observations, null, 2) + "</pre>";
-          });
+        console.log("✅ SMART READY");
+        console.log("FHIR server:", client.state.serverUrl);
+        console.log("Patient id:", client.patient && client.patient.id);
+
+        const patientBox = document.getElementById("patient");
+        const obsBox = document.getElementById("observations");
+
+        // 🚨 Sandbox 沒有傳病人時
+        if (!client.patient || !client.patient.id) {
+          patientBox.textContent = "Error: Patient is not available";
+          obsBox.textContent = "";
+          return;
+        }
+
+        // 1️⃣ 讀取病人資料
+        client.patient.read().then(function (patient) {
+          patientBox.textContent = JSON.stringify(patient, null, 2);
+        });
+
+        // 2️⃣ 查詢該病人的 Observation
+        return client.request(
+          "Observation?subject=Patient/" + client.patient.id +
+          "&_sort=-date&_count=10",
+          { pageLimit: 1, flat: true }
+        );
+
       })
-      .catch(error => {
-        console.error(error);
-        document.body.innerHTML =
-          "<p style='color:red'>Error: " + error + "</p>";
+      .then(function (observations) {
+
+        if (!observations) return;
+
+        document.getElementById("observations").textContent =
+          JSON.stringify(observations, null, 2);
+
+      })
+      .catch(function (error) {
+
+        console.error("❌ SMART ERROR", error);
+
+        document.getElementById("patient").textContent =
+          "Error: " + (error.message || error);
       });
   </script>
+
 </body>
 </html>
