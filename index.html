@@ -1,25 +1,16 @@
 <script src="https://cdn.jsdelivr.net/npm/fhirclient/build/fhir-client.min.js"></script>
 
+<pre id="out">Loading…</pre>
+
 <script>
 FHIR.oauth2.ready()
   .then(client => {
-    if (!client.patient) {
-      document.getElementById("patient").textContent =
-        "SMART ready (no patient context)";
-      return;
-    }
-
-    document.getElementById("patient").textContent =
-      "Patient ID: " + client.patient.id;
-
-    return client.patient.read()
-      .then(p => {
-        document.getElementById("patient").textContent =
-          JSON.stringify(p, null, 2);
-      });
+    document.getElementById("out").textContent =
+      "SMART ready (standalone)\nUser = " +
+      (client.user?.fhirUser ?? "none");
   })
-  .catch(e => {
-    document.getElementById("patient").textContent =
-      "SMART error:\n" + e;
+  .catch(err => {
+    document.getElementById("out").textContent =
+      "SMART error:\n" + err;
   });
 </script>
