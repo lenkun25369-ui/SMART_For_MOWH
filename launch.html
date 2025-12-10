@@ -4,21 +4,20 @@
   <meta charset="UTF-8" />
   <title>SMART Launch</title>
 
-  <!-- ✅ 必須載入，否則 FHIR 不存在 -->
-  <script src="https://cdn.jsdelivr.net/npm/fhirclient@2.8.6/build/fhir-client.min.js"></script>
+  <!-- ✅ 改用 unpkg（穩定） -->
+  <script src="https://unpkg.com/fhirclient/build/fhir-client.min.js"></script>
 </head>
 
 <body>
   <p>Launching SMART app...</p>
 
   <script>
-    // ✅ 等確定 FHIR 存在
     if (typeof FHIR === "undefined") {
       document.body.innerHTML =
         "<h2 style='color:red'>FHIR client not loaded</h2>";
     } else {
       FHIR.oauth2.authorize({
-        clientId: "mohw-smart-dashboard", 
+        clientId: "mohw-smart-dashboard",
         scope: "launch launch/patient openid fhirUser patient/*.read",
         redirectUri: "index.html"
       });
