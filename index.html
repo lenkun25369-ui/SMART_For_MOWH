@@ -1,73 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>SMART on FHIR Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/fhirclient@2.8.6/build/fhir-client.min.js"></script>
 
-  <!-- ✅ 官方建議用這個 -->
-  <script src="https://cdn.jsdelivr.net/npm/fhirclient@2.8.6/build/fhir-client.min.js"
-          defer></script>
+<script>
+FHIR.oauth2.ready()
+  .then(client => {
+    document.getElementById("patient").textContent =
+      "SMART ready\nPatient ID: " + client.patient.id;
 
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    pre { background: #f5f5f5; padding: 10px; }
-  </style>
-</head>
-
-<body>
-  <h1>SMART on FHIR Dashboard</h1>
-
-  <h2>Current Patient</h2>
-  <pre id="patient">Loading...</pre>
-
-  <h2>ECG Observation (Lead II)</h2>
-  <pre id="ecg">Loading...</pre>
-
-  <script>
-    window.addEventListener("DOMContentLoaded", () => {
-      console.log("✅ DOM loaded");
-
-      // ✅ 關鍵：保證 FHIR 已存在
-      if (!window.FHIR) {
-        console.error("❌ FHIR client not loaded");
-        document.getElementById("patient").textContent = "FHIR client not loaded";
-        return;
-      }
-
-      FHIR.oauth2.ready()
-        .then(client => {
-          console.log("✅ SMART client ready");
-          console.log("Patient ID:", client.patient.id);
-
-          // Step 1：抓病人
-          return client.patient.read().then(patient => {
-            document.getElementById("patient").textContent =
-              JSON.stringify(patient, null, 2);
-
-            // Step 2：抓 ECG Observation（Lead II）
-            return client.request(
-              "Observation?code=http://loinc.org|131328&subject=Patient/" + client.patient.id,
-              { flat: true }
-            );
-          })
-          .then(observations => {
-            if (!observations.length) {
-              document.getElementById("ecg").textContent = "No ECG found";
-              return;
-            }
-
-            const ecg = observations[0].valueSampledData?.data || "";
-            document.getElementById("ecg").textContent =
-              "ECG samples (first 300):\n" +
-              ecg.split(" ").slice(0, 300).join(" ");
-          });
-        })
-        .catch(err => {
-          console.error(err);
-          document.getElementById("patient").textContent =
-            "SMART error: " + err;
-        });
-    });
-  </script>
-</body>
-</html>
+    return client.patient.read()
+      .then(p => {
+        document.getElementById("patient").textContent =
+          JSON.stringify(p, null, 2);
+      });
+  })
+  .catch(e => {
+    document.getElementById("patient").textContent =
+      "SMART error:\n" + e;
+  });
+</script>
