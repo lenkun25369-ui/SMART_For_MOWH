@@ -2,25 +2,39 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <title>SMART Launch</title>
+  <title>SMART EHR Launch</title>
 
+  <!-- SMART JS -->
   <script src="https://cdn.jsdelivr.net/npm/fhirclient/build/fhir-client.min.js"></script>
 </head>
 
 <body>
-  <p>Launching SMART app...</p>
+  <p>Launching SMART app from EHR...</p>
 
   <script>
+    // ✅ EHR Launch：iss + launch 由 MOHW EHR 傳入
+    const params = new URLSearchParams(window.location.search);
+    const iss = params.get("iss");
+    const launch = params.get("launch");
 
-    FHIR.oauth2.authorize({
-      clientId: "mohw-smart-dashboard",
-      scope: "openid fhirUser",
-      redirectUri: "https://lenkun25369-ui.github.io/SMART_For_MOWH/index.html",
-        
-        
-    });
-    
+    if (!iss || !launch) {
+      document.body.innerHTML =
+        "<h2 style='color:red'>Error: Not launched from EHR (missing launch)</h2>";
+    } else {
+      FHIR.oauth2.authorize({
+        clientId: "mohw-smart-dashboard",
+
+        // ✅ EHR launch 必要 scope
+        scope: "launch launch/patient openid fhirUser patient/*.read",
+
+        // ✅ 必須與 sandbox 註冊完全一致
+        redirectUri: "https://lenkun25369-ui.github.io/SMART_For_MOWH/index.html",
+
+        // ✅ 明確帶入，避免 sandbox 判斷錯誤
+        iss: iss,
+        launch: launch
+      });
+    }
   </script>
 </body>
 </html>
-
