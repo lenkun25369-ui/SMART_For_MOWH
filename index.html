@@ -1,16 +1,54 @@
-<script src="https://cdn.jsdelivr.net/npm/fhirclient/build/fhir-client.min.js"></script>
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>SMART App (EHR Launch)</title>
 
-<pre id="out">Loading…</pre>
+  <!-- SMART JS -->
+  <script src="https://cdn.jsdelivr.net/npm/fhirclient/build/fhir-client.min.js"></script>
+</head>
+
+<body>
+
+<h3>SMART App Ready</h3>
+<pre id="out">Loading...</pre>
 
 <script>
 FHIR.oauth2.ready()
   .then(client => {
-    document.getElementById("out").textContent =
-      "SMART ready (standalone)\nUser = " +
-      (client.user?.fhirUser ?? "none");
+
+    let info = [];
+    info.push("✅ SMART OAuth ready");
+    info.push("FHIR Server: " + client.state.serverUrl);
+
+    if (client.user) {
+      info.push("User: " + client.user.fhirUser);
+    }
+
+    if (!client.patient) {
+      info.push("⚠️ No patient context");
+      document.getElementById("out").textContent = info.join("\n");
+      return;
+    }
+
+    info.push("Patient ID: " + client.patient.id);
+    document.getElementById("out").textContent = info.join("\n\n");
+
+    // ✅ 讀取病人資料
+    return client.patient.read();
+  })
+  .then(patient => {
+    if (patient) {
+      document.getElementById("out").textContent +=
+        "\n\n📄 Patient Resource:\n" +
+        JSON.stringify(patient, null, 2);
+    }
   })
   .catch(err => {
     document.getElementById("out").textContent =
-      "SMART error:\n" + err;
+      "❌ SMART error:\n" + err;
   });
 </script>
+
+</body>
+</html>
