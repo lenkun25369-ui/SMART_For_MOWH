@@ -1,33 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
   <title>SMART Launch</title>
+
+  <!-- ✅ 必須載入，否則 FHIR 不存在 -->
+  <script src="https://cdn.jsdelivr.net/npm/fhirclient@2.8.6/build/fhir-client.min.js"></script>
 </head>
 
 <body>
-  <p>Launching SMART app…</p>
-
-  <!-- ✅ 一定要放在 body 最後才載入 -->
-  <script src="https://cdn.jsdelivr.net/npm/fhirclient@2.8.6/build/fhir-client.min.js"></script>
+  <p>Launching SMART app...</p>
 
   <script>
-    // ✅ 等整個頁面 + library 準備好
-    window.addEventListener("load", function () {
-      if (!window.FHIR) {
-        document.body.innerHTML =
-          "<p style='color:red'>FHIR client failed to load</p>";
-        return;
-      }
-
-      console.log("FHIR client loaded OK");
-
+    // ✅ 等確定 FHIR 存在
+    if (typeof FHIR === "undefined") {
+      document.body.innerHTML =
+        "<h2 style='color:red'>FHIR client not loaded</h2>";
+    } else {
       FHIR.oauth2.authorize({
-        client_id: "mohw-smart-dashboard",
-        scope: "launch openid fhirUser patient/*.read",
-        redirect_uri: "https://lenkun25369-ui.github.io/SMART_For_MOWH/index.html"
+        clientId: "mohw-smart-dashboard", 
+        scope: "launch launch/patient openid fhirUser patient/*.read",
+        redirectUri: "index.html"
       });
-    });
+    }
   </script>
 </body>
 </html>
