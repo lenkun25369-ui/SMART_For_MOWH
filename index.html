@@ -1,24 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>SMART on FHIR Dashboard</title>
 
-  <!-- ✅ SMART JS Client -->
-  <script src="https://cdn.jsdelivr.net/npm/fhirclient@2.8.6/build/fhir-client.min.js"></script>
+  <!-- ✅ 官方建議用這個 -->
+  <script src="https://cdn.jsdelivr.net/npm/fhirclient@2.8.6/build/fhir-client.min.js"
+          defer></script>
 
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    pre {
-      background: #f5f5f5;
-      padding: 10px;
-      border-radius: 5px;
-      max-height: 300px;
-      overflow: auto;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    pre { background: #f5f5f5; padding: 10px; }
   </style>
 </head>
 
@@ -26,75 +18,56 @@
   <h1>SMART on FHIR Dashboard</h1>
 
   <h2>Current Patient</h2>
-  <div id="patient">Loading...</div>
+  <pre id="patient">Loading...</pre>
 
   <h2>ECG Observation (Lead II)</h2>
-  <div id="ecg">Loading...</div>
+  <pre id="ecg">Loading...</pre>
 
   <script>
-    console.log("🔥 INDEX.JS LOADED");
-    FHIR.oauth2.ready()
-      .then(client => {
+    window.addEventListener("DOMContentLoaded", () => {
+      console.log("✅ DOM loaded");
 
-        console.log("✅ SMART client ready");
-        console.log("✅ Patient ID:", client.patient.id);
+      // ✅ 關鍵：保證 FHIR 已存在
+      if (!window.FHIR) {
+        console.error("❌ FHIR client not loaded");
+        document.getElementById("patient").textContent = "FHIR client not loaded";
+        return;
+      }
 
-        // ========= Step 1：讀 Patient =========
-        return client.patient.read()
-          .then(patient => {
-            document.getElementById("patient").innerHTML =
-              "<pre>" + JSON.stringify(patient, null, 2) + "</pre>";
+      FHIR.oauth2.ready()
+        .then(client => {
+          console.log("✅ SMART client ready");
+          console.log("Patient ID:", client.patient.id);
 
-            // ========= Step 2：抓 ECG Observation =========
+          // Step 1：抓病人
+          return client.patient.read().then(patient => {
+            document.getElementById("patient").textContent =
+              JSON.stringify(patient, null, 2);
+
+            // Step 2：抓 ECG Observation（Lead II）
             return client.request(
-              `Observation?subject=Patient/${client.patient.id}&code=131328`,
+              "Observation?code=http://loinc.org|131328&subject=Patient/" + client.patient.id,
               { flat: true }
             );
+          })
+          .then(observations => {
+            if (!observations.length) {
+              document.getElementById("ecg").textContent = "No ECG found";
+              return;
+            }
+
+            const ecg = observations[0].valueSampledData?.data || "";
+            document.getElementById("ecg").textContent =
+              "ECG samples (first 300):\n" +
+              ecg.split(" ").slice(0, 300).join(" ");
           });
-      })
-
-      .then(observations => {
-        if (!observations || observations.length === 0) {
-          document.getElementById("ecg").innerHTML =
-            "<p style='color:red'>❌ 找不到 ECG Observation</p>";
-          return;
-        }
-
-        const ecgObs = observations[0];
-        const sampled = ecgObs.valueSampledData;
-
-        // ========= 驗證頻率 =========
-        console.log("✅ Sampling period (ms):", sampled.period);
-        console.log("✅ Expected Hz:", 1000 / sampled.period);
-
-        // ========= Step 3：ECG string → number array =========
-        const ecgArray = sampled.data
-          .trim()
-          .split(/\s+/)
-          .map(Number);
-
-        console.log("✅ ECG sample count:", ecgArray.length);
-        console.log("✅ First 10 samples:", ecgArray.slice(0, 10));
-
-        // ========= 顯示（不要一次塞 37500 筆） =========
-        document.getElementById("ecg").innerHTML =
-          "<pre>" + JSON.stringify({
-            resourceId: ecgObs.id,
-            samplingPeriodMs: sampled.period,
-            sampleCount: ecgArray.length,
-            first10Samples: ecgArray.slice(0, 10)
-          }, null, 2) + "</pre>";
-
-        // ======= 下一步：這裡就是模型 inference 的入口 =======
-        // inference(ecgArray);
-
-      })
-
-      .catch(error => {
-        console.error(error);
-        document.body.innerHTML =
-          "<p style='color:red'>Error: " + error + "</p>";
-      });
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById("patient").textContent =
+            "SMART error: " + err;
+        });
+    });
   </script>
 </body>
 </html>
