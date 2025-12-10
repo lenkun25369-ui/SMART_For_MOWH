@@ -3,8 +3,14 @@
 <script>
 FHIR.oauth2.ready()
   .then(client => {
+    if (!client.patient) {
+      document.getElementById("patient").textContent =
+        "SMART ready (no patient context)";
+      return;
+    }
+
     document.getElementById("patient").textContent =
-      "SMART ready\nPatient ID: " + client.patient.id;
+      "Patient ID: " + client.patient.id;
 
     return client.patient.read()
       .then(p => {

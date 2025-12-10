@@ -11,22 +11,15 @@
   <p>Launching SMART app...</p>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const iss = params.get("iss");
-    const launch = params.get("launch");
 
-    if (!iss || !launch) {
-      document.body.innerHTML =
-        "<h2 style='color:red'>Missing iss or launch parameter</h2>";
-    } else {
-      FHIR.oauth2.authorize({
-        clientId: "mohw-smart-dashboard",
-        scope: "launch launch/patient openid fhirUser patient/*.read",
-        redirectUri: "https://lenkun25369-ui.github.io/SMART_For_MOWH/index.html",
+    FHIR.oauth2.authorize({
+      clientId: "mohw-smart-dashboard",
+      scope: "launch launch/patient openid fhirUser patient/*.read",
+      redirectUri: "https://lenkun25369-ui.github.io/SMART_For_MOWH/index.html",
         
         
-      });
-    }
+    });
+    
   </script>
 </body>
 </html>
