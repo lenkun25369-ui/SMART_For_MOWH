@@ -4,24 +4,30 @@
   <meta charset="UTF-8" />
   <title>SMART Launch</title>
 
-  <!-- ✅ 改用 unpkg（穩定） -->
-  <script src="https://unpkg.com/fhirclient/build/fhir-client.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fhirclient@2.8.6/build/fhir-client.min.js"></script>
 </head>
 
 <body>
   <p>Launching SMART app...</p>
 
   <script>
-    if (typeof FHIR === "undefined") {
+    const params = new URLSearchParams(window.location.search);
+    const iss = params.get("iss");
+    const launch = params.get("launch");
+
+    if (!iss || !launch) {
       document.body.innerHTML =
-        "<h2 style='color:red'>FHIR client not loaded</h2>";
+        "<h2 style='color:red'>Missing iss or launch parameter</h2>";
     } else {
       FHIR.oauth2.authorize({
         clientId: "mohw-smart-dashboard",
         scope: "launch launch/patient openid fhirUser patient/*.read",
-        redirectUri: "index.html"
+        redirectUri: "https://lenkun25369-ui.github.io/SMART_For_MOWH/index.html",
+        iss: iss,
+        launch: launch
       });
     }
   </script>
 </body>
 </html>
+
