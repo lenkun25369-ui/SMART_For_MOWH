@@ -46,6 +46,7 @@ document.getElementById("go").onclick = () => {
 
 FHIR.oauth2.ready()
   .then(client => {
+    console.log("ACCESS TOKEN:", client.state.tokenResponse.access_token);
     let display = [];
 
     display.push("SMART Ready");
