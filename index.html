@@ -3,51 +3,41 @@
 <head>
   <meta charset="UTF-8" />
   <title>SMART App (Patient Info)</title>
-
   <script src="https://cdn.jsdelivr.net/npm/fhirclient/build/fhir-client.min.js"></script>
 </head>
 
 <body>
+
 <h2>Patient Information</h2>
 <pre id="out">Loading...</pre>
 
-<button id="go" style="padding:10px 20px; font-size: 18px;">
-  ▶ 進入 Shiny App
-</button>
+<h3 id="countdown"></h3>
 
 <script>
-// 1️⃣ OAuth OK
+// 🟢 你的 Shiny app（ngrok domain）
+const shinyAppUrl = "https://faraway-ringingly-lorenza.ngrok-free.dev/";
+
 FHIR.oauth2.ready()
-  .then(client => {
-
-    let text = [];
-    text.push("FHIR Server: " + client.state.serverUrl);
-
-    if (!client.patient) {
-      text.push("⚠️ No patient context");
-      document.getElementById("out").textContent = text.join("\n");
-      return;
-    }
-
-    text.push("Patient ID: " + client.patient.id);
-
-    document.getElementById("out").textContent = text.join("\n\n");
-
-    // 2️⃣ 抓取 patient resource
-    return client.patient.read();
-  })
+  .then(client => client.patient.read())
   .then(patient => {
-    if (patient) {
-      document.getElementById("out").textContent +=
-        "\n\n📄 Patient Resource:\n" +
-        JSON.stringify(patient, null, 2);
-    }
-  });
+    document.getElementById("out").textContent = JSON.stringify(patient, null, 2);
 
-// 3️⃣ 按下按鈕 → 前往 Shiny App（ngrok）
-document.getElementById("go").onclick = function () {
-    window.location.href = "https://faraway-ringingly-lorenza.ngrok-free.dev/";
-};
+    // 🧭 倒數 10 秒自動跳轉
+    let sec = 10;
+    let timer = setInterval(() => {
+      document.getElementById("countdown").textContent =
+        `Shiny App will open in ${sec} seconds...`;
+
+      if (sec === 0) {
+        clearInterval(timer);
+        window.location.href = shinyAppUrl;
+      }
+      sec--;
+    }, 1000);
+  })
+  .catch(err => {
+    document.getElementById("out").textContent = "Error:\n" + err;
+  });
 </script>
 
 </body>
