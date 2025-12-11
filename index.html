@@ -2,38 +2,38 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <title>SMART App (EHR Launch)</title>
+  <title>SMART App (Patient Info)</title>
 
-  <!-- SMART JS -->
   <script src="https://cdn.jsdelivr.net/npm/fhirclient/build/fhir-client.min.js"></script>
 </head>
 
 <body>
-
-<h3>SMART App Ready</h3>
+<h2>Patient Information</h2>
 <pre id="out">Loading...</pre>
+
+<button id="go" style="padding:10px 20px; font-size: 18px;">
+  ▶ 進入 Shiny App
+</button>
+
 <script>
+// 1️⃣ OAuth OK
 FHIR.oauth2.ready()
   .then(client => {
 
-    let info = [];
-    info.push("✅ SMART OAuth ready");
-    info.push("FHIR Server: " + client.state.serverUrl);
-
-    if (client.user) {
-      info.push("User: " + client.user.fhirUser);
-    }
+    let text = [];
+    text.push("FHIR Server: " + client.state.serverUrl);
 
     if (!client.patient) {
-      info.push("⚠️ No patient context");
-      document.getElementById("out").textContent = info.join("\n");
+      text.push("⚠️ No patient context");
+      document.getElementById("out").textContent = text.join("\n");
       return;
     }
 
-    info.push("Patient ID: " + client.patient.id);
-    document.getElementById("out").textContent = info.join("\n\n");
+    text.push("Patient ID: " + client.patient.id);
 
-    // ✅ 讀取病人資料
+    document.getElementById("out").textContent = text.join("\n\n");
+
+    // 2️⃣ 抓取 patient resource
     return client.patient.read();
   })
   .then(patient => {
@@ -42,11 +42,12 @@ FHIR.oauth2.ready()
         "\n\n📄 Patient Resource:\n" +
         JSON.stringify(patient, null, 2);
     }
-  })
-  .catch(err => {
-    document.getElementById("out").textContent =
-      "❌ SMART error:\n" + err;
   });
+
+// 3️⃣ 按下按鈕 → 前往 Shiny App（ngrok）
+document.getElementById("go").onclick = function () {
+    window.location.href = "https://faraway-ringingly-lorenza.ngrok-free.dev/";
+};
 </script>
 
 </body>
