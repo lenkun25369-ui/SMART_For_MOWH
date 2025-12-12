@@ -116,7 +116,30 @@ const timer = setInterval(() => {
       "&fhir=" + encodeURIComponent(fhirBase);
   }
 }, 1000);
+// ----------------------------------------
+// ⭐ ⭐ ⭐ 方法 C：把 hash 參數傳到 Shiny input
+// ----------------------------------------
+(function () {
+  const hash = window.location.hash.substring(1);
+  const params = new URLSearchParams(hash);
 
+  const token = params.get("token");
+  const pid   = params.get("pid");
+  const fhir  = params.get("fhir");
+
+  function sendToShiny() {
+    if (window.Shiny) {
+      Shiny.setInputValue("token", token);
+      Shiny.setInputValue("pid", pid);
+      Shiny.setInputValue("fhir", fhir);
+      console.log("✔ Sent to Shiny:", { token, pid, fhir });
+    } else {
+      setTimeout(sendToShiny, 300);
+    }
+  }
+
+  sendToShiny();
+})();
 </script>
 
 </body>
