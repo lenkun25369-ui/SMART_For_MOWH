@@ -37,20 +37,28 @@
 </button>
 
 <script>
-// 你的 Shiny App (ngrok) 位置
+// 你的 Shiny App (ngrok/onrender) 位置
 const shiny_url = "https://shiny-app-om91.onrender.com/";
 
-document.getElementById("go").onclick = () => {
-  window.location.href = shiny_url;
-};
+let token = null;
+let pid = null;
+let fhirBase = null;
 
+// -------------------------------
+// SMART OAuth2 Ready
+// -------------------------------
 FHIR.oauth2.ready()
   .then(client => {
     console.log("ACCESS TOKEN:", client.state.tokenResponse.access_token);
-    let display = [];
 
+    // ⭐ 新增：儲存 token、pid、fhir
+    token = client.state.tokenResponse.access_token;
+    pid = client.patient?.id || null;
+    fhirBase = client.state.serverUrl;
+
+    let display = [];
     display.push("SMART Ready");
-    display.push("FHIR Server: " + client.state.serverUrl);
+    display.push("FHIR Server: " + fhirBase);
 
     if (client.user) display.push("User: " + client.user.fhirUser);
 
@@ -60,8 +68,7 @@ FHIR.oauth2.ready()
       return;
     }
 
-    display.push("Patient ID: " + client.patient.id);
-
+    display.push("Patient ID: " + pid);
     document.getElementById("info").textContent = display.join("\n\n");
 
     return client.patient.read();
@@ -77,14 +84,36 @@ FHIR.oauth2.ready()
     document.getElementById("info").textContent = "❌ SMART Error:\n" + err;
   });
 
+
+// ----------------------------------------
+// ⭐ 新增：點擊按鈕 → 帶 Token/Patient 參數前往 Shiny
+// ----------------------------------------
+document.getElementById("go").onclick = () => {
+  window.location.href =
+    shiny_url +
+    "?token=" + encodeURIComponent(token) +
+    "&pid=" + encodeURIComponent(pid) +
+    "&fhir=" + encodeURIComponent(fhirBase);
+};
+
+
+// ----------------------------------------
 // --- ⏳ 倒數 10 秒自動跳轉 ---
-let sec = 60;
+// ----------------------------------------
+let sec = 10;
 const timer = setInterval(() => {
   sec--;
   document.getElementById("countdown").textContent = sec;
+
   if (sec <= 0) {
     clearInterval(timer);
-    window.location.href = shiny_url;
+
+    // ⭐ 新增：自動跳轉也帶參數
+    window.location.href =
+      shiny_url +
+      "?token=" + encodeURIComponent(token) +
+      "&pid=" + encodeURIComponent(pid) +
+      "&fhir=" + encodeURIComponent(fhirBase);
   }
 }, 1000);
 
