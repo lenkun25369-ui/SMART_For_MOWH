@@ -1,4 +1,5 @@
 from shiny import App, ui, render, reactive
+from urllib.parse import parse_qs, urlparse
 import requests
 import json
 
@@ -142,20 +143,27 @@ def pred_tit(chills, hypothermia, anemia, rdw, malignancy):
 # Server
 # -------------------------------
 def server(input, output, session):
-    raw_qs = session._session.scope.get("query_string", b"").decode()
 
-    # ✨ 轉成 dict
-    qp = {k: v[0] for k, v in parse_qs(raw_qs).items()}
+    # -----------------------------------------
+    # ⭐ Step 1：取得 Query String
+    # -----------------------------------------
+    url = session.request.url
+    parsed = urlparse(url)
+    qp = {k: v[0] for k, v in parse_qs(parsed.query).items()}
 
-    print("=== DEBUG QUERY PARAMS ===")
-    print("raw_qs:", raw_qs)
-    print("parsed:", qp)
-    print("===========================")
-    token = query.get("token")
-    pid   = query.get("pid")
-    fhir  = query.get("fhir")
+    # Debug 印出來（可移除）
+    print("=== QUERY PARAMS ===")
+    print(qp)
+    print("====================")
 
-    # ⭐ 新增：FHIR 呼叫（只新增，不動原本邏輯）
+    # 取出 token/pid/fhir
+    token = qp.get("token")
+    pid   = qp.get("pid")
+    fhir  = qp.get("fhir")
+
+    # -----------------------------------------
+    # ⭐ Step 2：FHIR call
+    # -----------------------------------------
     @reactive.Calc
     def patient_data():
         if not (token and pid and fhir):
@@ -170,17 +178,21 @@ def server(input, output, session):
         try:
             res = requests.get(url, headers=headers)
             return res.json()
-        except:
-            return {"error": "FHIR request failed"}
+        except Exception as e:
+            return {"error": f"FHIR request failed: {e}"}
 
-    # ⭐ 新增：顯示 FHIR 病患資料
+    # -----------------------------------------
+    # ⭐ Step 3：輸出 FHIR 結果
+    # -----------------------------------------
     @output
     @render.text
     def patient_info():
         data = patient_data()
         return json.dumps(data, indent=2)
 
-    # ⭐ 保留原本 CHARM prediction，不更動
+    # -----------------------------------------
+    # ⭐ 保留原本 CHARM prediction — 不修改
+    # -----------------------------------------
     @output
     @render.text
     def prob():
@@ -193,7 +205,6 @@ def server(input, output, session):
                 input.malignancy(),
             )
         )
-
 
 # -------------------------------
 # App
