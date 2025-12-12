@@ -91,7 +91,7 @@ FHIR.oauth2.ready()
 document.getElementById("go").onclick = () => {
   window.location.href =
     shiny_url +
-    "?token=" + encodeURIComponent(token) +
+    "#token=" + encodeURIComponent(token) +
     "&pid=" + encodeURIComponent(pid) +
     "&fhir=" + encodeURIComponent(fhirBase);
 };
@@ -111,7 +111,7 @@ const timer = setInterval(() => {
     // ⭐ 新增：自動跳轉也帶參數
     window.location.href =
       shiny_url +
-      "?token=" + encodeURIComponent(token) +
+      "#token=" + encodeURIComponent(token) +
       "&pid=" + encodeURIComponent(pid) +
       "&fhir=" + encodeURIComponent(fhirBase);
   }
