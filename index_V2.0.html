@@ -15,32 +15,34 @@
     }
     button {
       margin-top: 1rem;
-      padding: 0.5rem 1rem;
+      padding: 0.6rem 1.2rem;
       font-size: 1rem;
     }
   </style>
 </head>
 
 <body>
-  <h2>SMART on FHIR – Observation Demo</h2>
+  <h2>SMART on FHIR – CHARM Observation Demo</h2>
+
   <div id="info">Initializing...</div>
 
   <button id="go">Send to Shiny App</button>
 
   <script>
     /**********************************************************
-     * ⭐ 固定要展示與傳遞的 Observation（Sandbox 實際存在）
+     * 固定要展示與傳遞的 Observation（Sandbox 中實際存在）
      **********************************************************/
     const OBS_URL =
       "https://thas.mohw.gov.tw/v/r4/fhir/Observation/671123";
 
     /**********************************************************
-     * 下游 Shiny App（你原本的）
+     * 下游 Shiny App
      **********************************************************/
     const SHINY_URL = "https://shiny-app-v2-1.onrender.com/";
 
     let accessToken = null;
     let fhirBase = null;
+    let pid = null;
 
     /**********************************************************
      * SMART OAuth Ready
@@ -55,13 +57,17 @@
           "FHIR Server:\n" + fhirBase + "\n\n" +
           "Fetching Observation:\n" + OBS_URL + "\n";
 
-        // ⭐ 核心：不使用 patient context，直接讀 Observation
+        // ⭐ 核心：直接讀固定 Observation（不使用 patient context）
         return client.request(OBS_URL);
       })
       .then(obs => {
+        // ⭐ 從 Observation 反推出 patient id
+        pid = obs.subject?.reference?.replace("Patient/", "");
+
         document.getElementById("info").textContent +=
           "\n📄 Observation Resource Loaded:\n\n" +
-          JSON.stringify(obs, null, 2);
+          JSON.stringify(obs, null, 2) +
+          "\n\nDerived patient id: " + pid;
       })
       .catch(err => {
         document.getElementById("info").textContent =
@@ -69,14 +75,22 @@
       });
 
     /**********************************************************
-     * 傳遞給 Shiny（token + Observation URL）
+     * 傳遞給 Shiny（token + pid + obs + fhir）
      **********************************************************/
     document.getElementById("go").onclick = () => {
       const url =
         SHINY_URL +
         "#token=" + encodeURIComponent(accessToken) +
+        "&pid=" + encodeURIComponent(pid) +
         "&obs=" + encodeURIComponent(OBS_URL) +
         "&fhir=" + encodeURIComponent(fhirBase);
+
+      console.log("Sent to Shiny:", {
+        token: accessToken,
+        pid: pid,
+        fhir: fhirBase,
+        obs: OBS_URL
+      });
 
       window.location.href = url;
     };
